@@ -1,0 +1,59 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Openlayers WMTS Sample</title>
+    <script src="https://openlayers.org/en/v5.3.0/build/ol.js"></script>
+    <link rel="stylesheet" 	href="https://openlayers.org/en/v5.3.0/css/ol.css" type="text/css">
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
+</head>
+
+<body>
+    <div id="map" style="width: 100%; height: 350px; left: 0px; top: 0px"></div>
+
+    <script type="text/javascript">
+        let map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM({
+                        url: 'http://api.vworld.kr/req/wmts/1.0.0/[인증키]/Base/{z}/{y}/{x}.png',
+                        maxZoom: 17,
+                        tileLoadFunction: function (tile, src) {
+                            function attemptLoad(attempt) {
+                                var xhr = new XMLHttpRequest();
+                                xhr.responseType = 'blob';
+                                xhr.addEventListener('load', function (evt) {
+                                    var data = this.response;
+                                    if (data !== undefined) {
+                                        var url = URL.createObjectURL(data);
+                                        tile.getImage().addEventListener('load', function () {
+                                            URL.revokeObjectURL(url);
+                                        });
+                                        tile.getImage().src = url;
+                                    }
+                                });
+                                xhr.addEventListener('error', function () {
+                                    setTimeout(function () {
+                                        console.log('실패 ' + src);
+                                        tile.setState(3);
+                                    }, 5000);
+                                });
+                                xhr.open('GET', src);
+                                xhr.send();
+                            }
+                            attemptLoad(1);
+                        }
+                    })
+                })
+            ],
+            view: new ol.View({
+                center: ol.proj.transform([127.100616, 37.402142], 'EPSG:4326', 'EPSG:3857'),//좌표계 변환
+                zoom: 10
+            })
+        });
+    </script>
+
+</body>
+
+</html>
